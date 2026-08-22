@@ -143,7 +143,7 @@ for _prime_agent_skill_name in ${JSON.stringify(importNames)}:
 const ipythonSchema = Type.Object({
 	code: Type.String({
 		description:
-			"Python scratchpad code or `%%bash` shell cells to execute in the agent kernel. Use the target project's own environment for project imports, tests, scripts, CLIs, and dependency checks instead of direct kernel imports.",
+			"Python scratchpad code or `%%bash` shell cells to execute in the agent kernel. Spawn an independent child with `handle = await rlm('task', name='worker')`; it returns at admission, not the child's answer. Use the target project's own environment for project imports, tests, scripts, CLIs, and dependency checks instead of direct kernel imports.",
 	}),
 });
 
@@ -626,8 +626,9 @@ export function createIpythonToolDefinition(
 		name: "ipython",
 		label: "ipython",
 		description:
-			"Execute Python scratchpad code and `%%bash` shell cells in a persistent IPython kernel. Variables, imports, and loaded data persist across calls, and are revived on a best-effort basis when a session is resumed (objects that cannot be serialized are dropped and reported). Project imports, tests, scripts, CLIs, and dependency checks should run through the target project's own environment.",
-		promptSnippet: "ipython - persistent agent notebook for Python scratchpad code and %%bash orchestration",
+			"Execute Python scratchpad code and `%%bash` shell cells in a persistent IPython kernel. Variables, imports, and loaded data persist across calls, and are revived on a best-effort basis when a session is resumed (objects that cannot be serialized are dropped and reported). Spawn an independent child agent with `handle = await rlm('task', name='worker')`; admission returns immediately with rlm_child_id, name, session_dir, and model, never the child's answer. End the turn after spawning instead of doing that work inline. Project imports, tests, scripts, CLIs, and dependency checks should run through the target project's own environment.",
+		promptSnippet:
+			"ipython - persistent agent notebook for Python scratchpad code, %%bash orchestration, and await rlm(...) child spawn",
 		// The kernel is single-threaded — pi must not run two ipython calls in parallel within a batch.
 		executionMode: "sequential",
 		parameters: ipythonSchema,

@@ -2136,6 +2136,25 @@ describe("AgentSession rlm recursion", () => {
 		expect(child.rlmMaxDepth).toBe(3);
 	});
 
+	it("admits an RLM child through the spawn_subagent tool", async () => {
+		const root = createSession();
+		const tool = root.getToolDefinition("spawn_subagent");
+		if (!tool) throw new Error("spawn_subagent must be a built-in tool");
+
+		const result = await tool.execute(
+			"call-spawn",
+			{ task: "inspect live herdr leftover panes", name: "herdr-inspect" },
+			undefined,
+			undefined,
+			undefined as never,
+		);
+		const handle = result.details as { rlm_child_id: string; name: string; session_dir: string };
+		expect(handle.name).toBe("herdr-inspect");
+		expect(handle.session_dir).toBeTruthy();
+		await waitFor(() => root.getRlmChildSession(handle.rlm_child_id) !== undefined);
+		expect(root.getRlmChildSession(handle.rlm_child_id)).toBeTruthy();
+	});
+
 	it("lets a stale kernel depth cap defer to the live host gate", () => {
 		const python =
 			process.env.PRIME_AGENT_KERNEL_PYTHON ?? join(homedir(), ".prime", "agent", "kernel-venv", "bin", "python");

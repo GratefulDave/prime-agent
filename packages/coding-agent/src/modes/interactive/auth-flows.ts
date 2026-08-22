@@ -885,8 +885,8 @@ export class ProviderAuthFlows {
 									manualCodeReject = undefined;
 								}
 							});
-					} else if (providerId === "github-copilot") {
-						// GitHub Copilot polls after onAuth
+					} else if (providerId === "github-copilot" || providerId === "xai-oauth") {
+						// Device-code providers poll after onAuth
 						dialog.showWaiting("Waiting for browser authentication...");
 					}
 					// For Anthropic: onPrompt is called immediately after

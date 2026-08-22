@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Added `/login` for xAI Grok OAuth (SuperGrok or X Premium+), using the OpenAI-compatible `https://api.x.ai/v1` endpoint.
+- Added `grok-4.6` as the default xAI Grok OAuth model.
+- Fixed xAI Grok rejecting every tool call when one MCP tool used an exclusive-required `anyOf` at the schema root.
+- Added `await rlm(...)` child-spawn guidance to the `ipython` tool description so models that ignore the long system prompt still see how to delegate.
+- Added `spawn_subagent` as a built-in tool so models can admit an RLM child via function calling instead of `await rlm(...)`.
 - Fixed fullscreen wheel scrolling in Ghostty while retaining application link clicks; set `terminal.fullscreenMouse` to `false` to use native Cmd-click instead.
 - Changed the agents view to sort idle and inactive sessions by last message time, newest first, while keeping running agents in stable creation order.
 - Fixed `openai-codex` models being invisible to `rlm` subagents and `find_models` because model discovery reported Prime Agent's own version as the Codex client version ([#1375](https://github.com/PrimeIntellect-ai/prime-agent/pull/1375) by [@bilelrais](https://github.com/bilelrais)).

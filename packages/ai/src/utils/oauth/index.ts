@@ -5,6 +5,8 @@
  * for OAuth-based providers:
  * - Anthropic (Claude Pro/Max)
  * - GitHub Copilot
+ * - OpenAI Codex
+ * - xAI Grok (SuperGrok / X Premium+)
  */
 
 // Anthropic
@@ -19,8 +21,16 @@ export {
 } from "./github-copilot.js";
 // OpenAI Codex (ChatGPT OAuth)
 export { loginOpenAICodex, openaiCodexOAuthProvider, refreshOpenAICodexToken } from "./openai-codex.js";
-
 export * from "./types.js";
+// xAI Grok OAuth (SuperGrok / X Premium+)
+export {
+	loginXAIOAuth,
+	refreshXAIOAuthToken,
+	validateXAIEndpoint,
+	XAI_API_BASE_URL,
+	XAI_OAUTH_API_HEADERS,
+	xaiOAuthProvider,
+} from "./xai.js";
 
 // ============================================================================
 // Provider Registry
@@ -30,11 +40,13 @@ import { anthropicOAuthProvider } from "./anthropic.js";
 import { githubCopilotOAuthProvider } from "./github-copilot.js";
 import { openaiCodexOAuthProvider } from "./openai-codex.js";
 import type { OAuthCredentials, OAuthProviderId, OAuthProviderInfo, OAuthProviderInterface } from "./types.js";
+import { xaiOAuthProvider } from "./xai.js";
 
 const BUILT_IN_OAUTH_PROVIDERS: OAuthProviderInterface[] = [
 	anthropicOAuthProvider,
 	githubCopilotOAuthProvider,
 	openaiCodexOAuthProvider,
+	xaiOAuthProvider,
 ];
 
 const oauthProviderRegistry = new Map<string, OAuthProviderInterface>(

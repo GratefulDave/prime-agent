@@ -66,7 +66,7 @@ prime-agent
 /login  # Then select provider
 ```
 
-Then just talk to Prime Agent. By default, Prime Agent gives the model one tool: `ipython`. The model uses the persistent kernel to read files, run commands, edit code, and inspect data. Add capabilities via [skills](#skills), [prompt templates](#prompt-templates), [extensions](#extensions), or [Prime Agent packages](#prime-agent-packages).
+Then just talk to Prime Agent. By default, Prime Agent gives the model `ipython` and `spawn_subagent`. The model uses the persistent kernel to read files, run commands, edit code, and inspect data, and admits independent child agents with `spawn_subagent`. Add capabilities via [skills](#skills), [prompt templates](#prompt-templates), [extensions](#extensions), or [Prime Agent packages](#prime-agent-packages).
 
 The Python kernel runtime is set up automatically on first invocation. Set `PRIME_AGENT_KERNEL_PYTHON` to use an existing Python environment with `ipykernel`.
 
@@ -96,6 +96,7 @@ For each built-in provider, Prime Agent maintains a list of tool-capable models,
 - Cloudflare AI Gateway
 - Cloudflare Workers AI
 - xAI
+- xAI Grok OAuth (SuperGrok or X Premium+)
 - OpenRouter
 - Vercel AI Gateway
 - ZAI

@@ -504,7 +504,7 @@ describe("parseArgs", () => {
 			expect(result.tools).toEqual(["read", "bash", "edit"]);
 			expect(result.diagnostics).toContainEqual({
 				type: "error",
-				message: "Unknown built-in tool(s): read. Available built-in tools: ipython",
+				message: "Unknown built-in tool(s): read. Available built-in tools: ipython, spawn_subagent",
 			});
 		});
 	});

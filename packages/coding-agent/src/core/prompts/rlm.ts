@@ -33,6 +33,20 @@ const IPYTHON_CONTROL_PROMPT = [
 	"RLM-native call contract: installed Python skills are pre-imported modules. Read the matching SKILL.md and call its documented function, such as `await <skill_import>.<function>(...)`; when a CLI exists, use `<skill_import> ...` from shell. Continual harness skill entries are Python REPL skills with an explicit Python `reference` and `arguments` contract. Spawn a reusable delegation spec with `await rlm('sub-task')`; admission returns a child handle immediately. Results arrive only through an available messaging capability or files, never as an `rlm()` return value. Do not invent non-native wrappers such as `call_skill(...)` or `run_subagent(...)`.",
 ].join("\n");
 
+const IPYTHON_SPAWN_SENTENCE =
+	"Spawn a reusable delegation spec with `await rlm('sub-task')`; admission returns a child handle immediately. Results arrive only through an available messaging capability or files, never as an `rlm()` return value.";
+
+const IPYTHON_NO_SPAWN_SENTENCE =
+	"Do not spawn child sessions with `await rlm(...)`. Complete the task in this kernel.";
+
+function ipythonControlPrompt(allowRecursion: boolean): string {
+	if (allowRecursion) return IPYTHON_CONTROL_PROMPT;
+	return IPYTHON_CONTROL_PROMPT.replace(IPYTHON_SPAWN_SENTENCE, IPYTHON_NO_SPAWN_SENTENCE).replace(
+		", and recursive subcalls",
+		"",
+	);
+}
+
 export interface ChildAgentDoctrineOptions {
 	depth?: number;
 	parentAgent?: string;
@@ -151,7 +165,7 @@ export function buildRlmPrompt(options: RlmPromptOptions): string {
 	}
 
 	if (hasIpython) {
-		parts.push("", IPYTHON_CONTROL_PROMPT);
+		parts.push("", ipythonControlPrompt(allowRecursion));
 		if (installedSkills.includes("refine")) {
 			parts.push(
 				"",

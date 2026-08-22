@@ -18,8 +18,9 @@ const oauthTokens = await Promise.all([
 	resolveApiKey("anthropic"),
 	resolveApiKey("github-copilot"),
 	resolveApiKey("openai-codex"),
+	resolveApiKey("xai-oauth"),
 ]);
-const [anthropicOAuthToken, githubCopilotToken, openaiCodexToken] = oauthTokens;
+const [anthropicOAuthToken, githubCopilotToken, openaiCodexToken, xaiOauthToken] = oauthTokens;
 
 /**
  * Test that tool results containing only images work correctly across all providers.
@@ -463,6 +464,26 @@ describe("Tool Results with Images", () => {
 			async () => {
 				const llm = getModel("github-copilot", "claude-sonnet-4.5");
 				await handleToolWithTextAndImageResult(llm, { apiKey: githubCopilotToken });
+			},
+		);
+	});
+
+	describe("xAI Grok OAuth Provider", () => {
+		it.skipIf(!xaiOauthToken)(
+			"grok-4.3 - should handle tool result with only image",
+			{ retry: 3, timeout: 30000 },
+			async () => {
+				const llm = getModel("xai-oauth", "grok-4.3");
+				await handleToolWithImageResult(llm, { apiKey: xaiOauthToken });
+			},
+		);
+
+		it.skipIf(!xaiOauthToken)(
+			"grok-4.3 - should handle tool result with text and image",
+			{ retry: 3, timeout: 30000 },
+			async () => {
+				const llm = getModel("xai-oauth", "grok-4.3");
+				await handleToolWithTextAndImageResult(llm, { apiKey: xaiOauthToken });
 			},
 		);
 	});
