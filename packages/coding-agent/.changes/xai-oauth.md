@@ -1,0 +1,5 @@
+- Added `/login` for xAI Grok OAuth (SuperGrok or X Premium+), using the OpenAI-compatible `https://api.x.ai/v1` endpoint.
+- Added `grok-4.6` as the default xAI Grok OAuth model.
+- Fixed xAI Grok rejecting every tool call when one MCP tool used an exclusive-required `anyOf` at the schema root.
+- Added `await rlm(...)` child-spawn guidance to the `ipython` tool description so models that ignore the long system prompt still see how to delegate.
+- Added `spawn_subagent` as a built-in tool so models can admit an RLM child via function calling instead of `await rlm(...)`.

@@ -47,12 +47,8 @@ export {
 
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 import type { ToolDefinition } from "../extensions/types.js";
-import { createIpythonTool, createIpythonToolDefinition, type IpythonToolOptions } from "./ipython.js";
-import {
-	createSpawnSubagentTool,
-	createSpawnSubagentToolDefinition,
-	type SpawnSubagentToolOptions,
-} from "./spawn-subagent.js";
+import { createIpythonToolDefinition, type IpythonToolOptions } from "./ipython.js";
+import { createSpawnSubagentToolDefinition, type SpawnSubagentToolOptions } from "./spawn-subagent.js";
 
 export type Tool = AgentTool<any>;
 export type ToolDef = ToolDefinition<any, any>;
@@ -65,38 +61,9 @@ export interface ToolsOptions {
 	spawnSubagent?: SpawnSubagentToolOptions;
 }
 
-export function createToolDefinition(toolName: ToolName, cwd: string, options?: ToolsOptions): ToolDef {
-	switch (toolName) {
-		case "ipython":
-			return createIpythonToolDefinition(cwd, options?.ipython);
-		case "spawn_subagent":
-			return createSpawnSubagentToolDefinition(options?.spawnSubagent);
-		default:
-			throw new Error(`Unknown tool name: ${toolName}`);
-	}
-}
-
-export function createTool(toolName: ToolName, cwd: string, options?: ToolsOptions): Tool {
-	switch (toolName) {
-		case "ipython":
-			return createIpythonTool(cwd, options?.ipython);
-		case "spawn_subagent":
-			return createSpawnSubagentTool(options?.spawnSubagent);
-		default:
-			throw new Error(`Unknown tool name: ${toolName}`);
-	}
-}
-
 export function createAllToolDefinitions(cwd: string, options?: ToolsOptions): Record<ToolName, ToolDef> {
 	return {
 		ipython: createIpythonToolDefinition(cwd, options?.ipython),
 		spawn_subagent: createSpawnSubagentToolDefinition(options?.spawnSubagent),
-	};
-}
-
-export function createAllTools(cwd: string, options?: ToolsOptions): Record<ToolName, Tool> {
-	return {
-		ipython: createIpythonTool(cwd, options?.ipython),
-		spawn_subagent: createSpawnSubagentTool(options?.spawnSubagent),
 	};
 }

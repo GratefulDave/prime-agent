@@ -44,7 +44,6 @@ async function testAbortSignal<TApi extends Api>(llm: Model<TApi>, options: Stre
 	}
 	const msg = await response.result();
 
-	// If we get here without throwing, the abort didn't work
 	expect(msg.stopReason).toBe("aborted");
 	expect(msg.content.length).toBeGreaterThan(0);
 
@@ -74,7 +73,6 @@ async function testImmediateAbort<TApi extends Api>(llm: Model<TApi>, options: S
 }
 
 async function testAbortThenNewMessage<TApi extends Api>(llm: Model<TApi>, options: StreamOptionsWithExtras = {}) {
-	// First request: abort immediately before any response content arrives
 	const controller = new AbortController();
 	controller.abort();
 
@@ -84,13 +82,10 @@ async function testAbortThenNewMessage<TApi extends Api>(llm: Model<TApi>, optio
 
 	const abortedResponse = await complete(llm, context, { ...options, signal: controller.signal });
 	expect(abortedResponse.stopReason).toBe("aborted");
-	// The aborted message has empty content since we aborted before anything arrived
 	expect(abortedResponse.content.length).toBe(0);
 
-	// Add the aborted assistant message to context (this is what happens in the real coding agent)
 	context.messages.push(abortedResponse);
 
-	// Second request: send a new message - this should work even with the aborted message in context
 	context.messages.push({
 		role: "user",
 		content: "What is 2 + 2?",

@@ -1,17 +1,3 @@
-/**
- * Test totalTokens field across all providers.
- *
- * totalTokens represents the total number of tokens processed by the LLM,
- * including input (with cache) and output (with thinking). This is the
- * base for calculating context size for the next request.
- *
- * - OpenAI Completions: Uses native total_tokens field
- * - OpenAI Responses: Uses native total_tokens field
- * - Google: Uses native totalTokenCount field
- * - Anthropic: Computed as input + output + cacheRead + cacheWrite
- * - Other OpenAI-compatible providers: Uses native total_tokens field
- */
-
 import { describe, expect, it } from "vitest";
 import { getModel } from "../src/models.js";
 import { complete } from "../src/stream.js";
@@ -26,7 +12,6 @@ import { hasBedrockCredentials } from "./bedrock-utils.js";
 import { hasCloudflareAiGatewayCredentials, hasCloudflareWorkersAICredentials } from "./cloudflare-utils.js";
 import { resolveApiKey } from "./oauth.js";
 
-// Resolve OAuth tokens at module level (async, runs before tests)
 const oauthTokens = await Promise.all([
 	resolveApiKey("anthropic"),
 	resolveApiKey("github-copilot"),
@@ -35,7 +20,6 @@ const oauthTokens = await Promise.all([
 ]);
 const [anthropicOAuthToken, githubCopilotToken, openaiCodexToken, xaiOauthToken] = oauthTokens;
 
-// Generate a long system prompt to trigger caching (>2k bytes for most providers)
 const LONG_SYSTEM_PROMPT = `You are a helpful assistant. Be concise in your responses.
 
 Here is some additional context that makes this system prompt long enough to trigger caching:
@@ -52,7 +36,6 @@ async function testTotalTokensWithCache<TApi extends Api>(
 	llm: Model<TApi>,
 	options: StreamOptionsWithExtras = {},
 ): Promise<{ first: Usage; second: Usage }> {
-	// First request - no cache
 	const context1: Context = {
 		systemPrompt: LONG_SYSTEM_PROMPT,
 		messages: [
@@ -67,7 +50,6 @@ async function testTotalTokensWithCache<TApi extends Api>(
 	const response1 = await complete(llm, context1, options);
 	expect(response1.stopReason).toBe("stop");
 
-	// Second request - should trigger cache read (same system prompt, add conversation)
 	const context2: Context = {
 		systemPrompt: LONG_SYSTEM_PROMPT,
 		messages: [
@@ -102,10 +84,6 @@ function assertTotalTokensEqualsComponents(usage: Usage) {
 }
 
 describe("totalTokens field", () => {
-	// =========================================================================
-	// Anthropic
-	// =========================================================================
-
 	describe.skipIf(!process.env.ANTHROPIC_API_KEY)("Anthropic (API Key)", () => {
 		it("claude-sonnet-4-5 - should return totalTokens equal to sum of components", {
 			retry: 3,
@@ -122,7 +100,6 @@ describe("totalTokens field", () => {
 			assertTotalTokensEqualsComponents(first);
 			assertTotalTokensEqualsComponents(second);
 
-			// Anthropic should have cache activity
 			const hasCache = second.cacheRead > 0 || second.cacheWrite > 0 || first.cacheWrite > 0;
 			expect(hasCache).toBe(true);
 		});
@@ -144,16 +121,11 @@ describe("totalTokens field", () => {
 				assertTotalTokensEqualsComponents(first);
 				assertTotalTokensEqualsComponents(second);
 
-				// Anthropic should have cache activity
 				const hasCache = second.cacheRead > 0 || second.cacheWrite > 0 || first.cacheWrite > 0;
 				expect(hasCache).toBe(true);
 			},
 		);
 	});
-
-	// =========================================================================
-	// OpenAI
-	// =========================================================================
 
 	describe.skipIf(!process.env.OPENAI_API_KEY)("OpenAI Completions", () => {
 		it("gpt-4o-mini - should return totalTokens equal to sum of components", {
@@ -213,10 +185,6 @@ describe("totalTokens field", () => {
 		});
 	});
 
-	// =========================================================================
-	// Google
-	// =========================================================================
-
 	describe.skipIf(!process.env.GEMINI_API_KEY)("Google", () => {
 		it("gemini-2.5-flash - should return totalTokens equal to sum of components", {
 			retry: 3,
@@ -253,7 +221,6 @@ describe("totalTokens field", () => {
 			assertTotalTokensEqualsComponents(second);
 		});
 	});
-
 	describe.skipIf(!process.env.XAI_API_KEY)("xAI", () => {
 		it("grok-4.3 - should return totalTokens equal to sum of components", { retry: 3, timeout: 60000 }, async () => {
 			const llm = getModel("xai", "grok-4.3");
@@ -268,10 +235,6 @@ describe("totalTokens field", () => {
 			assertTotalTokensEqualsComponents(second);
 		});
 	});
-
-	// =========================================================================
-	// Groq
-	// =========================================================================
 
 	describe.skipIf(!process.env.GROQ_API_KEY)("Groq", () => {
 		it("openai/gpt-oss-120b - should return totalTokens equal to sum of components", {
@@ -291,10 +254,6 @@ describe("totalTokens field", () => {
 		});
 	});
 
-	// =========================================================================
-	// Cerebras
-	// =========================================================================
-
 	describe.skipIf(!process.env.CEREBRAS_API_KEY)("Cerebras", () => {
 		it("gpt-oss-120b - should return totalTokens equal to sum of components", {
 			retry: 3,
@@ -312,10 +271,6 @@ describe("totalTokens field", () => {
 			assertTotalTokensEqualsComponents(second);
 		});
 	});
-
-	// =========================================================================
-	// Cloudflare Workers AI
-	// =========================================================================
 
 	describe.skipIf(!hasCloudflareWorkersAICredentials())("Cloudflare Workers AI", () => {
 		it("@cf/moonshotai/kimi-k2.6 - should return totalTokens equal to sum of components", {
@@ -337,10 +292,6 @@ describe("totalTokens field", () => {
 		});
 	});
 
-	// =========================================================================
-	// Cloudflare AI Gateway
-	// =========================================================================
-
 	describe.skipIf(!hasCloudflareAiGatewayCredentials())("Cloudflare AI Gateway", () => {
 		it("workers-ai/@cf/moonshotai/kimi-k2.6 - should return totalTokens equal to sum of components", {
 			retry: 3,
@@ -361,10 +312,6 @@ describe("totalTokens field", () => {
 		});
 	});
 
-	// =========================================================================
-	// Hugging Face
-	// =========================================================================
-
 	describe.skipIf(!process.env.HF_TOKEN)("Hugging Face", () => {
 		it("Kimi-K2.5 - should return totalTokens equal to sum of components", { retry: 3, timeout: 60000 }, async () => {
 			const llm = getModel("huggingface", "moonshotai/Kimi-K2.5");
@@ -380,10 +327,6 @@ describe("totalTokens field", () => {
 		});
 	});
 
-	// =========================================================================
-	// z.ai
-	// =========================================================================
-
 	describe.skipIf(!process.env.ZAI_API_KEY)("z.ai", () => {
 		it("should return totalTokens equal to sum of components", { retry: 3, timeout: 60000 }, async () => {
 			const llm = getZaiTestModel();
@@ -398,10 +341,6 @@ describe("totalTokens field", () => {
 			assertTotalTokensEqualsComponents(second);
 		});
 	});
-
-	// =========================================================================
-	// Mistral
-	// =========================================================================
 
 	describe.skipIf(!process.env.MISTRAL_API_KEY)("Mistral", () => {
 		it("devstral-medium-latest - should return totalTokens equal to sum of components", {
@@ -421,10 +360,6 @@ describe("totalTokens field", () => {
 		});
 	});
 
-	// =========================================================================
-	// MiniMax
-	// =========================================================================
-
 	describe.skipIf(!process.env.MINIMAX_API_KEY)("MiniMax", () => {
 		it("MiniMax-M2.7 - should return totalTokens equal to sum of components", {
 			retry: 3,
@@ -443,10 +378,6 @@ describe("totalTokens field", () => {
 		});
 	});
 
-	// =========================================================================
-	// Xiaomi MiMo
-	// =========================================================================
-
 	describe.skipIf(!process.env.XIAOMI_API_KEY)("Xiaomi MiMo (API billing)", () => {
 		it("mimo-v2.5-pro - should return totalTokens equal to sum of components", {
 			retry: 3,
@@ -464,10 +395,6 @@ describe("totalTokens field", () => {
 			assertTotalTokensEqualsComponents(second);
 		});
 	});
-
-	// =========================================================================
-	// Xiaomi MiMo Token Plan CN
-	// =========================================================================
 
 	describe.skipIf(!process.env.XIAOMI_TOKEN_PLAN_CN_API_KEY)("Xiaomi MiMo Token Plan (CN)", () => {
 		it("mimo-v2.5-pro - should return totalTokens equal to sum of components", {
@@ -489,10 +416,6 @@ describe("totalTokens field", () => {
 		});
 	});
 
-	// =========================================================================
-	// Xiaomi MiMo Token Plan AMS
-	// =========================================================================
-
 	describe.skipIf(!process.env.XIAOMI_TOKEN_PLAN_AMS_API_KEY)("Xiaomi MiMo Token Plan (AMS)", () => {
 		it("mimo-v2.5-pro - should return totalTokens equal to sum of components", {
 			retry: 3,
@@ -512,10 +435,6 @@ describe("totalTokens field", () => {
 			assertTotalTokensEqualsComponents(second);
 		});
 	});
-
-	// =========================================================================
-	// Xiaomi MiMo Token Plan SGP
-	// =========================================================================
 
 	describe.skipIf(!process.env.XIAOMI_TOKEN_PLAN_SGP_API_KEY)("Xiaomi MiMo Token Plan (SGP)", () => {
 		it("mimo-v2.5-pro - should return totalTokens equal to sum of components", {
@@ -537,10 +456,6 @@ describe("totalTokens field", () => {
 		});
 	});
 
-	// =========================================================================
-	// Kimi For Coding
-	// =========================================================================
-
 	describe.skipIf(!process.env.KIMI_API_KEY)("Kimi For Coding", () => {
 		it("should return totalTokens equal to sum of components", { retry: 3, timeout: 60000 }, async () => {
 			const llm = getKimiCodingTestModel();
@@ -555,10 +470,6 @@ describe("totalTokens field", () => {
 			assertTotalTokensEqualsComponents(second);
 		});
 	});
-
-	// =========================================================================
-	// Vercel AI Gateway
-	// =========================================================================
 
 	describe.skipIf(!process.env.AI_GATEWAY_API_KEY)("Vercel AI Gateway", () => {
 		it("google/gemini-2.5-flash - should return totalTokens equal to sum of components", {
@@ -577,10 +488,6 @@ describe("totalTokens field", () => {
 			assertTotalTokensEqualsComponents(second);
 		});
 	});
-
-	// =========================================================================
-	// OpenRouter - Multiple backend providers
-	// =========================================================================
 
 	describe.skipIf(!process.env.OPENROUTER_API_KEY)("OpenRouter", () => {
 		it("anthropic/claude-sonnet-4 - should return totalTokens equal to sum of components", {
@@ -664,10 +571,6 @@ describe("totalTokens field", () => {
 		});
 	});
 
-	// =========================================================================
-	// GitHub Copilot (OAuth)
-	// =========================================================================
-
 	describe("GitHub Copilot (OAuth)", () => {
 		it.skipIf(!githubCopilotToken)(
 			"gpt-5-mini - should return totalTokens equal to sum of components",
@@ -704,12 +607,6 @@ describe("totalTokens field", () => {
 		);
 	});
 
-	// =========================================================================
-	// =========================================================================
-
-	// =========================================================================
-	// =========================================================================
-
 	describe.skipIf(!hasBedrockCredentials())("Amazon Bedrock", () => {
 		it("claude-sonnet-4-5 - should return totalTokens equal to sum of components", {
 			retry: 3,
@@ -727,10 +624,6 @@ describe("totalTokens field", () => {
 			assertTotalTokensEqualsComponents(second);
 		});
 	});
-
-	// =========================================================================
-	// OpenAI Codex (OAuth)
-	// =========================================================================
 
 	describe("OpenAI Codex (OAuth)", () => {
 		it.skipIf(!openaiCodexToken)(
