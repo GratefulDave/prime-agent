@@ -8664,6 +8664,10 @@ export class InteractiveMode {
 
 		try {
 			const result = await runMcpManagementCommand(argv, this.settingsManager, this.modelRegistry.authStorage);
+			if (result.action === "enable" || result.action === "disable") {
+				await this.reloadAfterMcpChange(result.message);
+				return;
+			}
 			if (result.changed && result.serverChange) {
 				const { name, transport, verb, usesOAuth } = result.serverChange;
 				const hasMcpProviderRefresh = this.uiServices.refreshMcpProviders !== undefined;
@@ -8679,9 +8683,7 @@ export class InteractiveMode {
 				const builtins = BUILTIN_MCP_CATALOG.map(
 					(entry) => `${entry.label} (${entry.server}): ${isAuthed(entry.server) ? "connected" : "not connected"}`,
 				).join("\n");
-				this.showStatus(
-					`Built-in MCP integrations:\n${builtins}\n\nUser-configured MCP servers:\n${result.message}`,
-				);
+				this.showStatus(`Built-in MCP integrations:\n${builtins}\n\n${result.message}`);
 			} else {
 				this.showStatus(result.message);
 			}

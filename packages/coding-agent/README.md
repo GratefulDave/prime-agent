@@ -336,6 +336,17 @@ Built-in integrations for Linear and Notion ship disabled. **Logging in enables 
 
 Credentials are stored once in `~/.prime/agent/auth.json` (under `mcp:<name>`); the kernel reads them directly and the host refreshes expired tokens. Enablement is derived from whether valid credentials exist, so there is no separate on/off switch.
 
+Optional local intel servers (Context Mode, Codemap, Codebase Memory) stay off until you enable them and the matching binary is on `PATH`:
+
+```
+prime-agent mcp enable context-mode
+prime-agent mcp enable codemap
+prime-agent mcp enable codebase-memory
+```
+
+They appear in the generic `mcp` Python API, not as OAuth logins. Override binaries with `CONTEXT_MODE_MCP`, `CODEMAP_MCP`, or `CODEBASE_MEMORY_MCP`.
+
+
 **Add your own server.** Declare it under `mcpServers` in settings, then ship a tiny Python skill package that subclasses `McpIntegration`:
 
 ```jsonc

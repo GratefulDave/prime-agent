@@ -19,6 +19,7 @@ credentials in `auth.json`.
 ## Table of Contents
 
 - [Using a built-in integration](#using-a-built-in-integration)
+- [Optional local intel MCPs](#optional-local-intel-mcps)
 - [How a call works](#how-a-call-works)
 - [Authoring your own integration](#authoring-your-own-integration)
   - [1. Declare the server](#1-declare-the-server)
@@ -42,6 +43,33 @@ Built-in integrations (Linear, Notion) ship **disabled**. Logging in enables the
 Credentials are stored once in `~/.prime/agent/auth.json` under `mcp:<name>`.
 Enablement is derived from whether valid credentials exist — there is no separate
 on/off switch.
+
+## Optional local intel MCPs
+
+Context Mode, Codemap, and Codebase Memory ship as **optional** stdio MCP
+servers. They stay off until enabled and the matching binary is on `PATH`.
+
+```bash
+prime-agent mcp enable context-mode
+prime-agent mcp enable codemap
+prime-agent mcp enable codebase-memory
+prime-agent mcp list
+prime-agent mcp disable context-mode
+```
+
+`/mcp enable <name>` does the same from the TUI. Enablement is stored in
+`bundledMcps` in `~/.prime/agent/settings.json`. A user `mcpServers` entry with
+the same name wins.
+
+Override the executable or server script with `CONTEXT_MODE_MCP`, `CODEMAP_MCP`,
+or `CODEBASE_MEMORY_MCP`.
+
+These servers are used through the generic `mcp` Python API, not OAuth login:
+
+```python
+tools = await mcp.list_tools("context-mode")
+result = await mcp.call_tool("context-mode", "<tool>", arguments)
+```
 
 ## How a call works
 

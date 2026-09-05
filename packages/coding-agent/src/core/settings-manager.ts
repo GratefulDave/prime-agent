@@ -68,6 +68,12 @@ export interface BundledSkillsSettings {
 	websearch?: boolean; // default: true
 }
 
+export interface BundledMcpsSettings {
+	contextMode?: boolean; // default: false
+	codemap?: boolean; // default: false
+	codebaseMemory?: boolean; // default: false
+}
+
 export interface WarningSettings {
 	anthropicExtraUsage?: boolean; // default: true
 }
@@ -158,6 +164,7 @@ export interface Settings {
 	themes?: string[]; // Array of local theme file paths or directories
 	enableSkillCommands?: boolean; // default: true - register skills as /skill:name commands
 	bundledSkills?: BundledSkillsSettings; // Configure built-in skills shipped with Prime Agent
+	bundledMcps?: BundledMcpsSettings; // Optional local intel MCP servers (context-mode, codemap, CBM)
 	enableBuiltinSkills?: boolean; // default: true - load built-in skills shipped with prime-agent
 	terminal?: TerminalSettings;
 	images?: ImageSettings;
@@ -1090,6 +1097,23 @@ export class SettingsManager {
 
 	getBundledWebsearchEnabled(): boolean {
 		return this.getBundledSkills().websearch;
+	}
+
+	getBundledMcps(): Required<BundledMcpsSettings> {
+		return {
+			contextMode: this.settings.bundledMcps?.contextMode === true,
+			codemap: this.settings.bundledMcps?.codemap === true,
+			codebaseMemory: this.settings.bundledMcps?.codebaseMemory === true,
+		};
+	}
+
+	setBundledMcp(key: keyof BundledMcpsSettings, enabled: boolean): void {
+		if (!this.globalSettings.bundledMcps) {
+			this.globalSettings.bundledMcps = {};
+		}
+		this.globalSettings.bundledMcps[key] = enabled;
+		this.markModified("bundledMcps", key);
+		this.save();
 	}
 
 	getEnableBuiltinSkills(): boolean {

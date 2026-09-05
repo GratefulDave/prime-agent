@@ -9,13 +9,16 @@ import {
 } from "@earendil-works/pi-ai/mcp";
 import { registerOAuthProvider, unregisterOAuthProvider } from "@earendil-works/pi-ai/oauth";
 import type { AuthStorage } from "../auth-storage.js";
-import type { McpServerConfig } from "../settings-manager.js";
+import type { BundledMcpsSettings, McpServerConfig } from "../settings-manager.js";
 import type { AcpMcpServerConfig } from "./acp-mcp-types.js";
+import { isLocalIntelEnabled, LOCAL_INTEL_PRESETS, resolveLocalIntelConfig } from "./local-intel.js";
 
 export interface McpManagerOptions {
 	authStorage: AuthStorage;
 	/** Reads the current Settings.mcpServers (name → config). Re-read on refresh(). */
 	getUserServers?: () => Record<string, McpServerConfig> | undefined;
+	/** Reads optional local-intel enable flags. Re-read on refresh(). */
+	getBundledMcps?: () => BundledMcpsSettings | undefined;
 	/** Start an interactive host-side login for a server. Provided by the UI mode. */
 	beginLogin?: (server: string) => Promise<void>;
 }
@@ -35,6 +38,7 @@ interface ResolvedIntegration {
 export class McpManager {
 	private readonly authStorage: AuthStorage;
 	private readonly getUserServers: () => Record<string, McpServerConfig> | undefined;
+	private readonly getBundledMcps: () => BundledMcpsSettings | undefined;
 	private readonly beginLogin?: (server: string) => Promise<void>;
 	private integrations = new Map<string, ResolvedIntegration>();
 	private acpServers = new Map<string, AcpMcpServerConfig>();
@@ -45,6 +49,7 @@ export class McpManager {
 	constructor(options: McpManagerOptions) {
 		this.authStorage = options.authStorage;
 		this.getUserServers = options.getUserServers ?? (() => undefined);
+		this.getBundledMcps = options.getBundledMcps ?? (() => undefined);
 		this.beginLogin = options.beginLogin;
 		this.resolveIntegrations();
 		this.registerProviders();
@@ -106,6 +111,19 @@ export class McpManager {
 				userDeclared: true,
 			});
 		}
+		const bundledMcps = this.getBundledMcps();
+		for (const preset of LOCAL_INTEL_PRESETS) {
+			if (integrations.has(preset.server) || !isLocalIntelEnabled(bundledMcps, preset)) continue;
+			const config = resolveLocalIntelConfig(preset);
+			if (!config) continue;
+			integrations.set(preset.server, {
+				server: preset.server,
+				label: preset.label,
+				config,
+				usesOAuth: false,
+				userDeclared: true,
+			});
+		}
 		this.integrations = integrations;
 	}
 
@@ -163,13 +181,19 @@ export class McpManager {
 		return typeof endpoint === "string" && endpoint === integration.config.url;
 	}
 
-	/** `-<server>/SKILL.md` overrides for every built-in integration the user isn't logged into. */
+	/** `-<server>/SKILL.md` overrides for built-in integrations the user cannot use yet. */
 	getDisabledBuiltinSkillOverrides(): string[] {
 		const overrides: string[] = [];
 		for (const entry of BUILTIN_MCP_CATALOG) {
 			const integration = this.integrations.get(entry.server);
 			if (integration && !this.isAuthed(integration)) {
 				overrides.push(`-${entry.server}/SKILL.md`);
+			}
+		}
+		for (const preset of LOCAL_INTEL_PRESETS) {
+			const integration = this.integrations.get(preset.server);
+			if (!integration || !this.isAuthed(integration)) {
+				overrides.push(`-${preset.server}/SKILL.md`);
 			}
 		}
 		return overrides;

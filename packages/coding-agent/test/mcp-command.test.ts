@@ -187,4 +187,47 @@ describe("MCP management commands", () => {
 		await runMcpManagementCommand(["remove", "local"], manager);
 		expect(manager.getGlobalMcpServers()).toEqual({});
 	});
+
+	it("enables and disables optional local intel when the binary exists", async () => {
+		const binDir = join(testDir, "bin");
+		mkdirSync(binDir, { recursive: true });
+		const binary = join(binDir, "context-mode-mcp");
+		writeFileSync(binary, "#!/bin/sh\n");
+		const manager = SettingsManager.inMemory({});
+		const previous = process.env.CONTEXT_MODE_MCP;
+		process.env.CONTEXT_MODE_MCP = binary;
+		try {
+			await expect(runMcpManagementCommand(["enable", "context-mode"], manager)).resolves.toMatchObject({
+				action: "enable",
+				changed: true,
+			});
+			expect(manager.getBundledMcps().contextMode).toBe(true);
+			await expect(runMcpManagementCommand(["disable", "context-mode"], manager)).resolves.toMatchObject({
+				action: "disable",
+				changed: true,
+			});
+			expect(manager.getBundledMcps().contextMode).toBe(false);
+		} finally {
+			if (previous === undefined) delete process.env.CONTEXT_MODE_MCP;
+			else process.env.CONTEXT_MODE_MCP = previous;
+		}
+	});
+
+	it("rejects enable when the optional binary is missing", async () => {
+		const manager = SettingsManager.inMemory({});
+		const previous = process.env.CONTEXT_MODE_MCP;
+		process.env.CONTEXT_MODE_MCP = join(testDir, "missing-binary");
+		try {
+			await expect(runMcpManagementCommand(["enable", "context-mode"], manager)).rejects.toThrow("not installed");
+			expect(manager.getBundledMcps().contextMode).toBe(false);
+		} finally {
+			if (previous === undefined) delete process.env.CONTEXT_MODE_MCP;
+			else process.env.CONTEXT_MODE_MCP = previous;
+		}
+	});
+
+	it("rejects enable for unknown optional names", async () => {
+		const manager = SettingsManager.inMemory({});
+		await expect(runMcpManagementCommand(["enable", "linear"], manager)).rejects.toThrow("not an optional local MCP");
+	});
 });

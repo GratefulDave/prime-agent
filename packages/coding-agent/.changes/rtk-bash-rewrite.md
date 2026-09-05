@@ -1,0 +1,1 @@
+- Added a built-in RTK hook that rewrites agent bash commands through `rtk rewrite` when the `rtk` binary is installed.

@@ -1,7 +1,13 @@
 import { getCatalogEntry } from "@earendil-works/pi-ai/mcp";
 import type { McpServerConfig, SettingsManager } from "../settings-manager.js";
+import {
+	getLocalIntelPreset,
+	LOCAL_INTEL_PRESETS,
+	missingLocalIntelMessage,
+	resolveLocalIntelConfig,
+} from "./local-intel.js";
 
-export type McpManagementAction = "add" | "list" | "get" | "remove";
+export type McpManagementAction = "add" | "list" | "get" | "remove" | "enable" | "disable";
 
 export interface McpManagementResult {
 	action: McpManagementAction;
@@ -31,7 +37,37 @@ export async function runMcpManagementCommand(
 	const action = args[0];
 	if (action === "list") {
 		requireCount(args, 1, "mcp list");
-		return { action, message: formatMcpServerList(settingsManager.getGlobalMcpServers()), changed: false };
+		return { action, message: formatMcpList(settingsManager), changed: false };
+	}
+	if (action === "enable" || action === "disable") {
+		requireCount(args, 2, `mcp ${action} <name>`);
+		const name = validateName(args[1]!);
+		const preset = getLocalIntelPreset(name);
+		if (!preset) {
+			throw new Error(
+				`"${name}" is not an optional local MCP. Use one of: ${LOCAL_INTEL_PRESETS.map((entry) => entry.server).join(", ")}.`,
+			);
+		}
+		if (action === "enable") {
+			const config = resolveLocalIntelConfig(preset);
+			if (!config) throw new Error(missingLocalIntelMessage(preset));
+		}
+		settingsManager.setBundledMcp(preset.settingKey, action === "enable");
+		await flushGlobalSettings(settingsManager);
+		return {
+			action,
+			message:
+				action === "enable"
+					? `Enabled optional MCP "${preset.server}". Available next turn through mcp.`
+					: `Disabled optional MCP "${preset.server}".`,
+			changed: true,
+			serverChange: {
+				name: preset.server,
+				transport: "stdio",
+				verb: action === "enable" ? "added" : "removed",
+				usesOAuth: false,
+			},
+		};
 	}
 	if (action === "get") {
 		requireCount(args, 2, "mcp get <name>");
@@ -84,7 +120,7 @@ export async function runMcpManagementCommand(
 			},
 		};
 	}
-	throw new Error("Usage: mcp <add|list|get|remove>.");
+	throw new Error("Usage: mcp <add|list|get|remove|enable|disable>.");
 }
 
 export function parseMcpAddArgs(args: readonly string[]): {
@@ -174,6 +210,17 @@ export function formatMcpServerList(servers: Record<string, McpServerConfig> | u
 	const entries = Object.entries(servers ?? {}).sort(([left], [right]) => left.localeCompare(right));
 	if (entries.length === 0) return "No user-configured MCP servers.";
 	return entries.map(([name, config]) => formatMcpServerSummary(name, config)).join("\n");
+}
+
+function formatMcpList(settingsManager: SettingsManager): string {
+	const bundled = settingsManager.getBundledMcps();
+	const optional = LOCAL_INTEL_PRESETS.map((preset) => {
+		const enabled = bundled[preset.settingKey];
+		const resolved = resolveLocalIntelConfig(preset);
+		const availability = resolved ? "installed" : "missing";
+		return `${preset.server}: ${enabled ? "enabled" : "disabled"} (${availability})`;
+	}).join("\n");
+	return `Optional local MCP servers:\n${optional}\n\nUser-configured MCP servers:\n${formatMcpServerList(settingsManager.getGlobalMcpServers())}`;
 }
 
 export function formatMcpServer(name: string, config: McpServerConfig): string {

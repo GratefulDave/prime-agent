@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { getOAuthProvider, resetOAuthProviders } from "@earendil-works/pi-ai/oauth";
@@ -28,6 +28,9 @@ describe("McpManager", () => {
 		const overrides = manager.getDisabledBuiltinSkillOverrides();
 		expect(overrides).toContain("-linear/SKILL.md");
 		expect(overrides).toContain("-notion/SKILL.md");
+		expect(overrides).toContain("-context-mode/SKILL.md");
+		expect(overrides).toContain("-codemap/SKILL.md");
+		expect(overrides).toContain("-codebase-memory/SKILL.md");
 	});
 
 	it("enables an integration once credentials are stored", () => {
@@ -176,6 +179,36 @@ describe("McpManager", () => {
 		});
 
 		expect(manager.getEnabledGenericServers()).toEqual(["alpha", "zebra"]);
+	});
+
+	it("injects an enabled local intel server when the binary exists", () => {
+		const binary = join(tempDir, "context-mode-mcp");
+		writeFileSync(binary, "#!/bin/sh\n");
+		const previous = process.env.CONTEXT_MODE_MCP;
+		process.env.CONTEXT_MODE_MCP = binary;
+		try {
+			const manager = new McpManager({
+				authStorage,
+				getBundledMcps: () => ({ contextMode: true }),
+			});
+			expect(manager.getEnabledGenericServers()).toContain("context-mode");
+			expect(manager.getDisabledBuiltinSkillOverrides()).not.toContain("-context-mode/SKILL.md");
+		} finally {
+			if (previous === undefined) delete process.env.CONTEXT_MODE_MCP;
+			else process.env.CONTEXT_MODE_MCP = previous;
+		}
+	});
+
+	it("lets a user-declared local intel server win over the preset", () => {
+		const manager = new McpManager({
+			authStorage,
+			getBundledMcps: () => ({ contextMode: true }),
+			getUserServers: () => ({
+				"context-mode": { type: "stdio", command: "/custom/context-mode" },
+			}),
+		});
+		expect(manager.getEnabledGenericServers()).toContain("context-mode");
+		expect(manager.listStatus().find((s) => s.server === "context-mode")?.label).toBe("context-mode");
 	});
 
 	it("picks up mcpServers added after construction on refresh()", () => {

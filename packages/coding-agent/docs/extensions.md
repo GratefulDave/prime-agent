@@ -28,6 +28,12 @@ Extensions are TypeScript modules that extend Prime Agent's behavior. They can s
 
 See [examples/extensions/](../examples/extensions/) for working implementations.
 
+## Built-in RTK hook
+
+When `rtk` is on `PATH` (0.23+), Prime Agent rewrites agent `bash` commands
+through `rtk rewrite` before execution. Set `RTK_DISABLED=1` to turn this off.
+
+
 ## Table of Contents
 
 - [Quick Start](#quick-start)

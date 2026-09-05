@@ -9,6 +9,7 @@ export {
 	hasFileBasedHerdrIntegration,
 	herdrAgentStateExtension,
 } from "./builtin/herdr-agent-state.js";
+export { rtkExtension } from "./builtin/rtk.js";
 export {
 	createExtensionRuntime,
 	discoverAndLoadExtensions,

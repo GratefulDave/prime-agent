@@ -94,8 +94,8 @@ export const COMMAND_SPECS: readonly CommandSpec[] = [
 	},
 	{
 		path: ["mcp"],
-		usage: "mcp <add|list|get|remove>",
-		summary: "Manage user MCP servers",
+		usage: "mcp <add|list|get|remove|enable|disable>",
+		summary: "Manage user MCP servers and optional local intel MCPs",
 	},
 	{
 		path: ["mcp", "add"],
@@ -106,7 +106,7 @@ export const COMMAND_SPECS: readonly CommandSpec[] = [
 	{
 		path: ["mcp", "list"],
 		usage: "mcp list",
-		summary: "List user MCP servers",
+		summary: "List optional local and user MCP servers",
 	},
 	{
 		path: ["mcp", "get"],
@@ -117,6 +117,16 @@ export const COMMAND_SPECS: readonly CommandSpec[] = [
 		path: ["mcp", "remove"],
 		usage: "mcp remove <name>",
 		summary: "Remove a user MCP server",
+	},
+	{
+		path: ["mcp", "enable"],
+		usage: "mcp enable <context-mode|codemap|codebase-memory>",
+		summary: "Enable an optional local intel MCP",
+	},
+	{
+		path: ["mcp", "disable"],
+		usage: "mcp disable <context-mode|codemap|codebase-memory>",
+		summary: "Disable an optional local intel MCP",
 	},
 	{
 		path: ["package"],
