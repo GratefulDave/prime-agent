@@ -148,7 +148,7 @@ describe("McpManager", () => {
 		});
 		expect(manager.listStatus().find((s) => s.server === "remote")?.enabled).toBe(false);
 		expect(manager.listStatus().find((s) => s.server === "unbound")?.enabled).toBe(false);
-		expect(manager.getEnabledGenericServers()).toEqual([]);
+		expect(manager.getEnabledPersistentGenericServers()).toEqual([]);
 	});
 
 	it("honors a bearer-token env var for user-declared servers", () => {
@@ -178,7 +178,7 @@ describe("McpManager", () => {
 			}),
 		});
 
-		expect(manager.getEnabledGenericServers()).toEqual(["alpha", "zebra"]);
+		expect(manager.getEnabledPersistentGenericServers()).toEqual(["alpha", "zebra"]);
 	});
 
 	it("injects an enabled local intel server when the binary exists", () => {
@@ -191,7 +191,7 @@ describe("McpManager", () => {
 				authStorage,
 				getBundledMcps: () => ({ contextMode: true }),
 			});
-			expect(manager.getEnabledGenericServers()).toContain("context-mode");
+			expect(manager.getEnabledPersistentGenericServers()).toContain("context-mode");
 			expect(manager.getDisabledBuiltinSkillOverrides()).not.toContain("-context-mode/SKILL.md");
 		} finally {
 			if (previous === undefined) delete process.env.CONTEXT_MODE_MCP;
@@ -207,7 +207,7 @@ describe("McpManager", () => {
 				"context-mode": { type: "stdio", command: "/custom/context-mode" },
 			}),
 		});
-		expect(manager.getEnabledGenericServers()).toContain("context-mode");
+		expect(manager.getEnabledPersistentGenericServers()).toContain("context-mode");
 		expect(manager.listStatus().find((s) => s.server === "context-mode")?.label).toBe("context-mode");
 	});
 
@@ -300,7 +300,7 @@ describe("McpManager", () => {
 			credentialSource: "acp",
 		});
 		await expect(handlers["mcp.refresh"]({ server: "task" })).rejects.toThrow("does not use host OAuth");
-		expect(manager.getEnabledGenericServers()).toContain("task");
+		expect(manager.getAcpServers().map((server) => server.name)).toContain("task");
 
 		expect(manager.replaceAcpServers([], "owner-b")).toBe(false);
 		expect(() =>

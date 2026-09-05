@@ -10,7 +10,7 @@ type StreamOptionsWithExtras = StreamOptions & Record<string, unknown>;
 
 import { hasAzureOpenAICredentials, resolveAzureDeploymentName } from "./azure-utils.js";
 import { hasBedrockCredentials } from "./bedrock-utils.js";
-import { hasCloudflareAiGatewayCredentials, hasCloudflareWorkersAICredentials } from "./cloudflare-utils.js";
+import { hasCloudflareWorkersAICredentials } from "./cloudflare-utils.js";
 import { resolveApiKey } from "./oauth.js";
 
 const emptySchema = Type.Object({});
@@ -402,7 +402,7 @@ describe("AI Providers Unicode Surrogate Pair Tests", () => {
 			"claude-sonnet-4 - should handle emoji in tool results",
 			{ retry: 3, timeout: 30000 },
 			async () => {
-				const llm = getModel("github-copilot", "claude-sonnet-4.5");
+				const llm = getModel("github-copilot", "claude-sonnet-4.6");
 				await testEmojiInToolResults(llm, { apiKey: githubCopilotToken });
 			},
 		);
@@ -411,7 +411,7 @@ describe("AI Providers Unicode Surrogate Pair Tests", () => {
 			"claude-sonnet-4 - should handle real-world LinkedIn comment data with emoji",
 			{ retry: 3, timeout: 30000 },
 			async () => {
-				const llm = getModel("github-copilot", "claude-sonnet-4.5");
+				const llm = getModel("github-copilot", "claude-sonnet-4.6");
 				await testRealWorldLinkedInData(llm, { apiKey: githubCopilotToken });
 			},
 		);
@@ -420,7 +420,7 @@ describe("AI Providers Unicode Surrogate Pair Tests", () => {
 			"claude-sonnet-4 - should handle unpaired high surrogate (0xD83D) in tool results",
 			{ retry: 3, timeout: 30000 },
 			async () => {
-				const llm = getModel("github-copilot", "claude-sonnet-4.5");
+				const llm = getModel("github-copilot", "claude-sonnet-4.6");
 				await testUnpairedHighSurrogate(llm, { apiKey: githubCopilotToken });
 			},
 		);
@@ -492,22 +492,6 @@ describe("AI Providers Unicode Surrogate Pair Tests", () => {
 
 	describe.skipIf(!hasCloudflareWorkersAICredentials())("Cloudflare Workers AI Provider Unicode Handling", () => {
 		const llm = getModel("cloudflare-workers-ai", "@cf/moonshotai/kimi-k2.6");
-
-		it("should handle emoji in tool results", { retry: 3, timeout: 30000 }, async () => {
-			await testEmojiInToolResults(llm);
-		});
-
-		it("should handle real-world LinkedIn comment data with emoji", { retry: 3, timeout: 30000 }, async () => {
-			await testRealWorldLinkedInData(llm);
-		});
-
-		it("should handle unpaired high surrogate (0xD83D) in tool results", { retry: 3, timeout: 30000 }, async () => {
-			await testUnpairedHighSurrogate(llm);
-		});
-	});
-
-	describe.skipIf(!hasCloudflareAiGatewayCredentials())("Cloudflare AI Gateway Provider Unicode Handling", () => {
-		const llm = getModel("cloudflare-ai-gateway", "workers-ai/@cf/moonshotai/kimi-k2.6");
 
 		it("should handle emoji in tool results", { retry: 3, timeout: 30000 }, async () => {
 			await testEmojiInToolResults(llm);
