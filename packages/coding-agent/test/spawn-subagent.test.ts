@@ -14,7 +14,7 @@ describe("createSpawnSubagentToolDefinition", () => {
 			rlm_child_id: "sub-1",
 			name: "herdr-inspect",
 			session_dir: "/tmp/child",
-			model: "xai-oauth/grok-4.6",
+			model: "xai/grok-4.6",
 		};
 		const tool = createSpawnSubagentToolDefinition({
 			run: async (task, name) => {
@@ -45,7 +45,7 @@ describe("createSpawnSubagentToolDefinition", () => {
 					rlm_child_id: "sub-2",
 					name: "subagent-shard-abcd",
 					session_dir: "/tmp/child-2",
-					model: "xai-oauth/grok-4.6",
+					model: "xai/grok-4.6",
 				};
 			},
 		});

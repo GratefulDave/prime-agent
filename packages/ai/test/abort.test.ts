@@ -10,11 +10,7 @@ import { hasAzureOpenAICredentials, resolveAzureDeploymentName } from "./azure-u
 import { hasBedrockCredentials } from "./bedrock-utils.js";
 import { resolveApiKey } from "./oauth.js";
 
-// Resolve OAuth tokens at module level (async, runs before tests)
-const [openaiCodexToken, xaiOauthToken] = await Promise.all([
-	resolveApiKey("openai-codex"),
-	resolveApiKey("xai-oauth"),
-]);
+const [openaiCodexToken] = await Promise.all([resolveApiKey("openai-codex")]);
 
 async function testAbortSignal<TApi extends Api>(llm: Model<TApi>, options: StreamOptionsWithExtras = {}) {
 	const context: Context = {
@@ -258,18 +254,6 @@ describe("AI Providers Abort Tests", () => {
 
 		it("should handle immediate abort", { retry: 3 }, async () => {
 			await testImmediateAbort(llm);
-		});
-	});
-
-	describe("xAI Grok OAuth Provider Abort", () => {
-		it.skipIf(!xaiOauthToken)("should abort mid-stream", { retry: 3 }, async () => {
-			const llm = getModel("xai-oauth", "grok-4.3");
-			await testAbortSignal(llm, { apiKey: xaiOauthToken });
-		});
-
-		it.skipIf(!xaiOauthToken)("should handle immediate abort", { retry: 3 }, async () => {
-			const llm = getModel("xai-oauth", "grok-4.3");
-			await testImmediateAbort(llm, { apiKey: xaiOauthToken });
 		});
 	});
 

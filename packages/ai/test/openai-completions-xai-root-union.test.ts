@@ -47,7 +47,7 @@ const goodTool: Tool = {
 	parameters: Type.Object({ path: Type.String() }),
 };
 
-function makeModel(provider: "openai" | "xai" | "xai-oauth"): Model<"openai-completions"> {
+function makeModel(provider: "openai" | "xai"): Model<"openai-completions"> {
 	return {
 		id: provider === "openai" ? "gpt-4o-mini" : "grok-4.6",
 		name: provider === "openai" ? "GPT-4o Mini" : "Grok 4.6",
@@ -69,7 +69,7 @@ function abortedSignal(): AbortSignal {
 }
 
 function capturePayload(
-	provider: "openai" | "xai" | "xai-oauth",
+	provider: "openai" | "xai",
 	tools: Tool[],
 	toolChoice?: OpenAICompletionsToolChoice,
 ): Promise<ChatCompletionsPayload> {
@@ -193,12 +193,6 @@ describe("openai-completions xAI leftover-union quarantine", () => {
 		expect(payload.tools?.[0]?.function?.parameters?.anyOf).toBeUndefined();
 	});
 
-	it("keeps an exclusive-required MCP tool after wire flatten on xai-oauth", async () => {
-		const payload = await capturePayload("xai-oauth", [coverageTool, goodTool]);
-		expect(toolNames(payload)).toEqual(["mcp__codebase_memory_check_index_coverage", "read_file"]);
-		expect(payload.tools?.[0]?.function?.parameters?.anyOf).toBeUndefined();
-	});
-
 	it("keeps a leftover object-root union on OpenAI Completions", async () => {
 		const payload = await capturePayload("openai", [leftoverTool, goodTool]);
 		expect(toolNames(payload)).toEqual(["mcp__leftover_union", "read_file"]);
@@ -207,11 +201,6 @@ describe("openai-completions xAI leftover-union quarantine", () => {
 
 	it("quarantines a leftover object-root union on paid xAI only", async () => {
 		const payload = await capturePayload("xai", [leftoverTool, goodTool]);
-		expect(toolNames(payload)).toEqual(["read_file"]);
-	});
-
-	it("quarantines a leftover object-root union on xai-oauth", async () => {
-		const payload = await capturePayload("xai-oauth", [leftoverTool, goodTool]);
 		expect(toolNames(payload)).toEqual(["read_file"]);
 	});
 

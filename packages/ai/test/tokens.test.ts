@@ -16,9 +16,8 @@ const oauthTokens = await Promise.all([
 	resolveApiKey("anthropic"),
 	resolveApiKey("github-copilot"),
 	resolveApiKey("openai-codex"),
-	resolveApiKey("xai-oauth"),
 ]);
-const [anthropicOAuthToken, githubCopilotToken, openaiCodexToken, xaiOauthToken] = oauthTokens;
+const [anthropicOAuthToken, githubCopilotToken, openaiCodexToken] = oauthTokens;
 
 async function testTokensOnAbort<TApi extends Api>(llm: Model<TApi>, options: StreamOptionsWithExtras = {}) {
 	const context: Context = {
@@ -125,14 +124,6 @@ describe("Token Statistics on Abort", () => {
 
 		it("should include token stats when aborted mid-stream", { retry: 3, timeout: 30000 }, async () => {
 			await testTokensOnAbort(llm);
-		});
-	});
-
-	describe.skipIf(!xaiOauthToken)("xAI Grok OAuth Provider", () => {
-		const llm = getModel("xai-oauth", "grok-4.3");
-
-		it("should include token stats when aborted mid-stream", { retry: 3, timeout: 30000 }, async () => {
-			await testTokensOnAbort(llm, { apiKey: xaiOauthToken });
 		});
 	});
 

@@ -19,15 +19,7 @@ export {
 } from "./github-copilot.js";
 export { loginOpenAICodex, openaiCodexOAuthProvider, refreshOpenAICodexToken } from "./openai-codex.js";
 export * from "./types.js";
-// xAI Grok OAuth (SuperGrok / X Premium+)
-export {
-	loginXAIOAuth,
-	refreshXAIOAuthToken,
-	validateXAIEndpoint,
-	XAI_API_BASE_URL,
-	XAI_OAUTH_API_HEADERS,
-	xaiOAuthProvider,
-} from "./xai.js";
+export { getXaiSubscriptionModel, loginXai, refreshXaiToken, xaiOAuthProvider } from "./xai.js";
 
 import { anthropicOAuthProvider } from "./anthropic.js";
 import { githubCopilotOAuthProvider } from "./github-copilot.js";
