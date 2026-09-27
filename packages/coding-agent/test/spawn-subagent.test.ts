@@ -1,4 +1,6 @@
 import { describe, expect, test } from "vitest";
+import { buildRlmPrompt } from "../src/core/prompts/rlm.js";
+import { createIpythonToolDefinition } from "../src/core/tools/ipython.js";
 import { createSpawnSubagentToolDefinition } from "../src/core/tools/spawn-subagent.js";
 
 describe("createSpawnSubagentToolDefinition", () => {
@@ -58,5 +60,33 @@ describe("createSpawnSubagentToolDefinition", () => {
 		await expect(tool.execute("call-3", { task: "nope" }, undefined, undefined, undefined as never)).rejects.toThrow(
 			"spawn_subagent is not wired to a session",
 		);
+	});
+});
+
+describe("fork child-spawn guidance", () => {
+	test("strips spawn instructions when recursion is disabled", () => {
+		const prompt = buildRlmPrompt({
+			cwd: "/repo",
+			messagesPath: "/repo/.pi/sessions/session.jsonl",
+			installedSkills: ["websearch", "refine"],
+			activeTools: ["ipython"],
+			allowRecursion: false,
+		});
+
+		expect(prompt).toContain("Do not spawn child sessions with `await rlm(...)`. Complete the task in this kernel.");
+		expect(prompt).not.toContain("await rlm.spawn('sub-task', name='worker')");
+		expect(prompt).not.toContain("A callable `rlm` is already in your global namespace");
+	});
+
+	test("documents callable child spawn on the ipython tool", () => {
+		const tool = createIpythonToolDefinition("/repo");
+		expect(tool.description).toContain("await rlm('task', name='worker')");
+		expect(tool.promptSnippet).toContain("await rlm(...)");
+		const codeSchema = tool.parameters.properties.code;
+		const codeDescription =
+			codeSchema && "description" in codeSchema && typeof codeSchema.description === "string"
+				? codeSchema.description
+				: "";
+		expect(codeDescription).toContain("await rlm('task', name='worker')");
 	});
 });

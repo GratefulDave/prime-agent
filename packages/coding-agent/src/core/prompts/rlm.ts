@@ -52,7 +52,7 @@ const REPL_CONTROL_PROMPT = [
 ].join("\n");
 
 const IPYTHON_SPAWN_SENTENCE =
-	"Spawn a reusable delegation spec with `await rlm('sub-task')`; admission returns a child handle immediately. Results arrive only through an available messaging capability or files, never as an `rlm()` return value.";
+	"Spawn a reusable delegation spec with `await rlm.spawn('sub-task', name='worker')`; admission returns a child handle immediately. Results arrive only through an available messaging capability or files, never as an `rlm.spawn()` return value.";
 
 const IPYTHON_NO_SPAWN_SENTENCE =
 	"Do not spawn child sessions with `await rlm(...)`. Complete the task in this kernel.";
