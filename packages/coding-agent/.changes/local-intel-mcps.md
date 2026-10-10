@@ -1,1 +1,0 @@
-- Added optional Context Mode, Codemap, and Codebase Memory MCP servers, enabled with `prime-agent mcp enable` when the matching local binary is installed.
